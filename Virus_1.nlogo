@@ -9,6 +9,7 @@ globals[
 
 to setup
   clear-all
+  reset-ticks
    ask patches [ set pcolor white ]
   create-pessoas 100 [
     set color green
@@ -20,7 +21,6 @@ to setup
 end
 
 to go
-  reset-ticks
   ask pessoas[
     move
   ]
@@ -29,7 +29,7 @@ end
 
 to move
   rt random 100 - random 100
-  fd random 1
+  fd random-float 1
 end
 @#$#@#$#@
 GRAPHICS-WINDOW
