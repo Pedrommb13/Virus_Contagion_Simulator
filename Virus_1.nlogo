@@ -1,6 +1,11 @@
 breed [pessoas pessoa]
 pessoas-own[
-  sick?
+  virus?
+  p_inf
+  mask?
+  vac?
+  age
+  immune-duration
 ]
 globals[
   start-infection
@@ -16,8 +21,9 @@ to setup
     set shape "person"
     set size 1
     setxy random-xcor random-ycor
-    if random 100 < start-infection [  ]
+    set p_inf random-float 1
   ]
+ ask n-of 10 pessoas [ get-sick ]
 end
 
 to go
@@ -25,6 +31,11 @@ to go
     move
   ]
   tick
+end
+
+to get-sick
+  set virus? true
+  set immune-duration 0
 end
 
 to move
