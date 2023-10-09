@@ -7,10 +7,10 @@ pessoas-own[
   age
   immune-duration
 ]
+
 globals[
   start-infection
 ]
-
 
 to setup
   clear-all
@@ -23,7 +23,7 @@ to setup
     setxy random-xcor random-ycor
     set p_inf random-float 1
   ]
- ask n-of 10 pessoas [ get-sick ]
+ ask n-of 10 pessoas [ get-sick set color red ]
 end
 
 to go
@@ -33,12 +33,17 @@ to go
   tick
 end
 
-to get-sick
+to get-sick ;pessoas procedure
   set virus? true
   set immune-duration 0
 end
 
-to move
+to get-healthy ;pessoas procedure
+  set virus? false
+  set immune-duration 0
+end
+
+to move ;pessoas procedure
   rt random 100 - random 100
   fd random-float 1
 end
