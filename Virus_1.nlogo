@@ -1,51 +1,109 @@
 breed [pessoas pessoa]
 pessoas-own[
   virus?
-  p_inf
   mask?
   vac?
   age
   immune-duration
+  virus-duration
 ]
 
 globals[
   start-infection
+  dead
+  recovered
 ]
 
 to setup
   clear-all
   reset-ticks
-   ask patches [ set pcolor white ]
+  ask patches [ set pcolor white ]
   create-pessoas 100 [
+    set virus? false
+    set age random 250
     set color green
     set shape "person"
     set size 1
     setxy random-xcor random-ycor
-    set p_inf random-float 1
   ]
- ask n-of 10 pessoas [ get-sick set color red ]
+  ask n-of 10 pessoas [ get-sick ]
 end
 
 to go
+  reset-timer
   ask pessoas[
     move
+    ifelse virus? [ progress spread-sick ] [ spread-healthy]
+    if immune? [update-immune]
+    if age < 500 [ reproduce ]
+    set age age + 1
+    if age + random 250 > 1000 [ die ]
   ]
+   while [timer < 1 / tick-rate ] []
   tick
 end
 
+to update-immune
+  set immune-duration immune-duration - 1
+  if immune? = false [ set color green ]
+end
+
+to spread-sick ;pessoas procedure
+  ask other pessoas-here with [virus? = false and immune? = false] [
+    if random-float 1 < p_inf [ get-sick ]
+  ]
+end
+
+to spread-healthy
+  if count other pessoas-here with [virus?] > 0 [
+    if random-float 1 < p_inf [ get-sick ]
+  ]
+end
+
+to progress
+    if virus-duration > 0 [ set virus-duration virus-duration - 1 ]
+    if virus-duration = 0 [ immune-or-die ]
+end
+
+to immune-or-die
+  ifelse random-float 1 < mortality [ set dead dead + 1 die ] [ set recovered recovered + 1 get-healthy ]
+end
+
+
 to get-sick ;pessoas procedure
   set virus? true
+  set color red
+  set virus-duration 20 - random 5 + random 5
   set immune-duration 0
 end
 
 to get-healthy ;pessoas procedure
   set virus? false
-  set immune-duration 0
+  set color blue
+  set immune-duration immunity - random 5 + random 5
 end
 
 to move ;pessoas procedure
   rt random 100 - random 100
-  fd random-float 1
+  fd 1
+end
+
+to reproduce
+  if random-float 1 < nat-tax and count other pessoas-here > 0 and count turtles < 250
+    [ hatch 1
+      [ set age 1
+        set color green
+        set immune-duration 0
+      ]
+  ]
+end
+
+to spread-bt
+  ask one-of pessoas [ get-sick ]
+end
+
+to-report immune? ;pessoas procedure
+  report immune-duration > 0
 end
 @#$#@#$#@
 GRAPHICS-WINDOW
@@ -108,6 +166,141 @@ NIL
 NIL
 NIL
 1
+
+PLOT
+0
+448
+200
+598
+NIL
+NIL
+NIL
+0.0
+10.0
+0.0
+10.0
+true
+true
+"" ""
+PENS
+"Sick" 1.0 0 -2674135 true "" "plot count turtles with [virus?]"
+"Immune" 1.0 0 -11033397 true "" "plot count turtles with [immune?]"
+"healthy" 1.0 0 -13840069 true "" "plot count turtles with [virus? = false and immune? = false]"
+"total" 1.0 0 -7500403 true "" "plot count turtles"
+
+SLIDER
+16
+10
+188
+43
+tick-rate
+tick-rate
+10
+10000
+100.0
+10
+1
+NIL
+HORIZONTAL
+
+BUTTON
+120
+58
+202
+91
+NIL
+spread-bt
+NIL
+1
+T
+OBSERVER
+NIL
+NIL
+NIL
+NIL
+1
+
+MONITOR
+210
+458
+272
+503
+Mortality
+dead
+17
+1
+11
+
+MONITOR
+210
+514
+281
+559
+recovered
+recovered
+17
+1
+11
+
+SLIDER
+9
+408
+181
+441
+mortality
+mortality
+0
+1
+0.75
+0.01
+1
+NIL
+HORIZONTAL
+
+SLIDER
+9
+370
+181
+403
+p_inf
+p_inf
+0
+1
+0.6
+0.01
+1
+NIL
+HORIZONTAL
+
+SLIDER
+10
+332
+182
+365
+nat-tax
+nat-tax
+0
+1
+0.02
+0.01
+1
+NIL
+HORIZONTAL
+
+SLIDER
+209
+563
+381
+596
+immunity
+immunity
+0
+1000
+1000.0
+1
+1
+NIL
+HORIZONTAL
 
 @#$#@#$#@
 ## WHAT IS IT?
