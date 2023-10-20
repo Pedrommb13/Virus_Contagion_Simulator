@@ -10,7 +10,6 @@ pessoas-own[
 ]
 
 globals[
-  start-infection
   dead
   recovered
   born
@@ -23,12 +22,12 @@ to setup
   ask patches [ set pcolor white ]
   create-pessoas Starting-Population [
     set virus? false
-    set age 50 * 52
+    set age random 50 * 52
     set color green
     set shape "person"
     setxy random-xcor random-ycor
   ]
-  ask n-of 10 pessoas [ get-sick ]
+  ask n-of Starting-infection pessoas [ get-sick ]
 end
 
 to go
@@ -43,6 +42,7 @@ to go
   ]
    while [timer < 1 / tick-rate ] []
   tick
+  if ticks = maxit [stop]
 end
 
 to update-immune ;pessoas procedure
@@ -113,13 +113,13 @@ to-report immune? ;pessoas report
 end
 @#$#@#$#@
 GRAPHICS-WINDOW
-210
+236
 10
-647
-448
+674
+449
 -1
 -1
-13.0
+13.030303030303031
 1
 10
 1
@@ -174,11 +174,11 @@ NIL
 1
 
 PLOT
-0
-448
-200
-598
-NIL
+206
+464
+461
+614
+Year Plot
 Weeks
 Population
 0.0
@@ -187,7 +187,7 @@ Population
 10.0
 true
 true
-"" ""
+"" "set-plot-x-range (ticks - 52) ticks"
 PENS
 "Sick" 1.0 0 -2674135 true "" "plot count turtles with [virus?]"
 "Immune" 1.0 0 -11033397 true "" "plot count turtles with [immune?]"
@@ -202,8 +202,8 @@ SLIDER
 tick-rate
 tick-rate
 10
-200
-100.0
+500
+330.0
 10
 1
 NIL
@@ -227,32 +227,32 @@ NIL
 1
 
 MONITOR
-300
-511
-362
-556
-Mortality
+687
+296
+783
+341
+Mortality_Total
 dead
 17
 1
 11
 
 MONITOR
-214
-512
-285
-557
-recovered
+688
+249
+782
+294
+Recovered_Total
 recovered
 17
 1
 11
 
 SLIDER
-16
-263
-188
-296
+15
+346
+187
+379
 mortality
 mortality
 0
@@ -264,30 +264,15 @@ NIL
 HORIZONTAL
 
 SLIDER
-15
-222
-187
-255
-p_inf
-p_inf
-0
-1
-0.25
-0.01
-1
-NIL
-HORIZONTAL
-
-SLIDER
 14
-180
+305
 186
-213
-nat-tax
-nat-tax
+338
+p_inf
+p_inf
 0
 1
-0.01
+0.75
 0.01
 1
 NIL
@@ -295,9 +280,24 @@ HORIZONTAL
 
 SLIDER
 17
-347
+471
 189
-380
+504
+nat-tax
+nat-tax
+0
+1
+0.01
+0.01
+1
+NIL
+HORIZONTAL
+
+SLIDER
+16
+430
+188
+463
 immunity
 immunity
 0
@@ -309,10 +309,10 @@ NIL
 HORIZONTAL
 
 MONITOR
-286
-457
+689
 343
-502
+784
+388
 NIL
 born
 17
@@ -320,10 +320,10 @@ born
 11
 
 SLIDER
-16
-304
-188
-337
+15
+387
+187
+420
 sick-duration
 sick-duration
 0
@@ -335,10 +335,10 @@ NIL
 HORIZONTAL
 
 MONITOR
-357
-457
-414
-502
+787
+202
+848
+247
 sick%
 count turtles with [virus?] / count turtles * 100
 2
@@ -346,10 +346,10 @@ count turtles with [virus?] / count turtles * 100
 11
 
 MONITOR
-422
-457
-493
-502
+787
+247
+848
+292
 immune%
 count turtles with [immune?] / count turtles * 100
 2
@@ -357,10 +357,10 @@ count turtles with [immune?] / count turtles * 100
 11
 
 MONITOR
-379
-509
-454
-554
+690
+391
+784
+436
 time-years
 ticks / 52
 1
@@ -368,21 +368,21 @@ ticks / 52
 11
 
 MONITOR
-215
-457
-274
-502
-Infected
+688
+201
+782
+246
+Infected_Total
 Infected
 17
 1
 11
 
 SLIDER
-15
-139
-187
-172
+14
+221
+186
+254
 Starting-Population
 Starting-Population
 10
@@ -394,19 +394,159 @@ NIL
 HORIZONTAL
 
 SLIDER
-17
-390
-189
-423
+14
+262
+186
+295
 Maximum-Population
 Maximum-Population
 50
 1000
-300.0
+250.0
 10
 1
 NIL
 HORIZONTAL
+
+BUTTON
+704
+53
+789
+86
+go_n
+let x n\nloop [if x = 0 [stop] go set x x - 1]
+NIL
+1
+T
+OBSERVER
+NIL
+NIL
+NIL
+NIL
+1
+
+INPUTBOX
+800
+27
+850
+87
+n
+52.0
+1
+0
+Number
+
+BUTTON
+704
+17
+767
+50
+NIL
+go
+NIL
+1
+T
+OBSERVER
+NIL
+NIL
+NIL
+NIL
+1
+
+SLIDER
+14
+135
+186
+168
+maxit
+maxit
+-1
+100 * 52
+-1.0
+52
+1
+NIL
+HORIZONTAL
+
+MONITOR
+787
+294
+848
+339
+healthy%
+(count turtles with [not virus? and not immune?] / count turtles * 100)
+2
+1
+11
+
+PLOT
+470
+465
+690
+616
+Histogram
+weeks
+Population
+0.0
+10.0
+0.0
+10.0
+true
+false
+"" ""
+PENS
+"default" 1.0 0 -2674135 true "" "plot count turtles with [virus?]"
+"pen-1" 1.0 0 -11033397 true "" "plot count turtles with [immune?]"
+"pen-2" 1.0 0 -11085214 true "" "plot count turtles with [not virus? and not immune?]"
+"pen-3" 1.0 0 -16777216 true "" "plot count turtles"
+
+SLIDER
+14
+177
+186
+210
+Starting-infection
+Starting-infection
+0
+100
+10.0
+1
+1
+NIL
+HORIZONTAL
+
+MONITOR
+849
+202
+929
+247
+Sick_Now
+count turtles with [virus?]
+17
+1
+11
+
+MONITOR
+849
+247
+929
+292
+Immune_Now
+count turtles with [Immune?]
+17
+1
+11
+
+MONITOR
+849
+294
+929
+339
+Heallthy_Now
+count turtles with [not virus? and not immune?]
+17
+1
+11
 
 @#$#@#$#@
 ## WHAT IS IT?
