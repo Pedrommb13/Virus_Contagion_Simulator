@@ -32,17 +32,17 @@ end
 
 to go
   reset-timer
+  if ticks = maxit [stop]
   ask pessoas[
     move
-    ifelse virus? [ progress spread-sick ] [ spread-healthy ]
     if immune? [ update-immune ]
+    ifelse virus? [ progress spread-sick ] [ spread-healthy ]
     reproduce
     set age age - 1
     if age = 0 [ die ]
   ]
    while [timer < 1 / tick-rate ] []
   tick
-  if ticks = maxit [stop]
 end
 
 to update-immune ;pessoas procedure
@@ -142,16 +142,16 @@ ticks
 BUTTON
 16
 54
-79
+96
 87
-setup
+Setup
 setup
 NIL
 1
 T
 OBSERVER
 NIL
-NIL
+S
 NIL
 NIL
 1
@@ -159,9 +159,9 @@ NIL
 BUTTON
 16
 95
-79
+96
 128
-go
+Go_Maxit
 go
 T
 1
@@ -203,25 +203,25 @@ tick-rate
 tick-rate
 10
 500
-100.0
+250.0
 10
 1
 NIL
 HORIZONTAL
 
 BUTTON
-97
+100
 54
-179
+182
 87
-NIL
+Spread
 spread-bt
 NIL
 1
 T
 OBSERVER
 NIL
-NIL
+V
 NIL
 NIL
 1
@@ -272,7 +272,7 @@ p_inf
 p_inf
 0
 1
-0.65
+0.7
 0.01
 1
 NIL
@@ -410,10 +410,10 @@ HORIZONTAL
 
 BUTTON
 704
-53
+28
 789
-86
-go_n
+61
+Go_n
 let x n\nloop [if x = 0 [stop] go set x x - 1]
 NIL
 1
@@ -437,11 +437,11 @@ n
 Number
 
 BUTTON
-704
-17
-767
-50
-NIL
+101
+94
+182
+127
+Go_Once
 go
 NIL
 1
@@ -462,7 +462,7 @@ maxit
 maxit
 -1
 100 * 52
-0.0
+-1.0
 52
 1
 NIL
@@ -545,6 +545,17 @@ MONITOR
 Heallthy_Now
 count turtles with [not virus? and not immune?]
 17
+1
+11
+
+MONITOR
+849
+342
+929
+387
+Idade Media
+(sum [age] of turtles / count turtles) / 52
+1
 1
 11
 
