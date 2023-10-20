@@ -1,4 +1,5 @@
 breed [pessoas pessoa]
+
 pessoas-own[
   virus?
   mask?
@@ -12,18 +13,19 @@ globals[
   start-infection
   dead
   recovered
+  born
+  infected
 ]
 
 to setup
   clear-all
   reset-ticks
   ask patches [ set pcolor white ]
-  create-pessoas 100 [
+  create-pessoas Starting-Population [
     set virus? false
-    set age random 250
+    set age 50 * 52
     set color green
     set shape "person"
-    set size 1
     setxy random-xcor random-ycor
   ]
   ask n-of 10 pessoas [ get-sick ]
@@ -33,17 +35,17 @@ to go
   reset-timer
   ask pessoas[
     move
-    ifelse virus? [ progress spread-sick ] [ spread-healthy]
-    if immune? [update-immune]
-    if age < 500 [ reproduce ]
-    set age age + 1
-    if age + random 250 > 1000 [ die ]
+    ifelse virus? [ progress spread-sick ] [ spread-healthy ]
+    if immune? [ update-immune ]
+    reproduce
+    set age age - 1
+    if age = 0 [ die ]
   ]
    while [timer < 1 / tick-rate ] []
   tick
 end
 
-to update-immune
+to update-immune ;pessoas procedure
   set immune-duration immune-duration - 1
   if immune? = false [ set color green ]
 end
@@ -54,27 +56,26 @@ to spread-sick ;pessoas procedure
   ]
 end
 
-to spread-healthy
-  if count other pessoas-here with [virus?] > 0 [
+to spread-healthy ;pessoas procedure
+  if count other pessoas-here with [virus? = true ] > 0 [
     if random-float 1 < p_inf [ get-sick ]
   ]
 end
 
-to progress
-    if virus-duration > 0 [ set virus-duration virus-duration - 1 ]
-    if virus-duration = 0 [ immune-or-die ]
+to progress ;pessoas procedure
+    ifelse virus-duration > 0 [ set virus-duration virus-duration - 1 ] [ immune-or-die ]
 end
 
-to immune-or-die
+to immune-or-die ;pessoas procedure
   ifelse random-float 1 < mortality [ set dead dead + 1 die ] [ set recovered recovered + 1 get-healthy ]
 end
-
 
 to get-sick ;pessoas procedure
   set virus? true
   set color red
-  set virus-duration 20 - random 5 + random 5
+  set virus-duration sick-duration - random (sick-duration / 5) + random (sick-duration / 5)
   set immune-duration 0
+  set infected infected + 1
 end
 
 to get-healthy ;pessoas procedure
@@ -84,25 +85,30 @@ to get-healthy ;pessoas procedure
 end
 
 to move ;pessoas procedure
-  rt random 100 - random 100
+  rt random 90
+  lt random 90
   fd 1
 end
 
-to reproduce
-  if random-float 1 < nat-tax and count other pessoas-here > 0 and count turtles < 250
+to reproduce ;pessoas procedure
+  if random-float 1 < nat-tax and count other pessoas-here > 0 and count turtles < Maximum-Population
     [ hatch 1
-      [ set age 1
-        set color green
+      [
+        set age 50 * 52
+        lt 90 fd 1
+        get-healthy
         set immune-duration 0
+        set color green
+        set born born + 1
       ]
   ]
 end
 
-to spread-bt
-  ask one-of pessoas [ get-sick ]
+to spread-bt ;pessoas procedure
+  ask one-of pessoas with [not virus? and not immune?] [ get-sick ]
 end
 
-to-report immune? ;pessoas procedure
+to-report immune? ;pessoas report
   report immune-duration > 0
 end
 @#$#@#$#@
@@ -134,10 +140,10 @@ ticks
 30.0
 
 BUTTON
-44
-57
-107
-90
+16
+54
+79
+87
 setup
 setup
 NIL
@@ -151,10 +157,10 @@ NIL
 1
 
 BUTTON
-56
-108
-119
-141
+16
+100
+79
+133
 go
 go
 T
@@ -173,8 +179,8 @@ PLOT
 200
 598
 NIL
-NIL
-NIL
+Weeks
+Population
 0.0
 10.0
 0.0
@@ -196,7 +202,7 @@ SLIDER
 tick-rate
 tick-rate
 10
-10000
+200
 100.0
 10
 1
@@ -204,10 +210,10 @@ NIL
 HORIZONTAL
 
 BUTTON
-120
-58
-202
-91
+97
+54
+179
+87
 NIL
 spread-bt
 NIL
@@ -221,10 +227,10 @@ NIL
 1
 
 MONITOR
-210
-458
-272
-503
+300
+511
+362
+556
 Mortality
 dead
 17
@@ -232,10 +238,10 @@ dead
 11
 
 MONITOR
-210
-514
-281
-559
+214
+512
+285
+557
 recovered
 recovered
 17
@@ -243,42 +249,12 @@ recovered
 11
 
 SLIDER
-9
-408
-181
-441
+16
+263
+188
+296
 mortality
 mortality
-0
-1
-0.75
-0.01
-1
-NIL
-HORIZONTAL
-
-SLIDER
-9
-370
-181
-403
-p_inf
-p_inf
-0
-1
-0.6
-0.01
-1
-NIL
-HORIZONTAL
-
-SLIDER
-10
-332
-182
-365
-nat-tax
-nat-tax
 0
 1
 0.02
@@ -288,16 +264,146 @@ NIL
 HORIZONTAL
 
 SLIDER
-209
-563
-381
-596
+15
+222
+187
+255
+p_inf
+p_inf
+0
+1
+0.25
+0.01
+1
+NIL
+HORIZONTAL
+
+SLIDER
+14
+180
+186
+213
+nat-tax
+nat-tax
+0
+1
+0.01
+0.01
+1
+NIL
+HORIZONTAL
+
+SLIDER
+17
+347
+189
+380
 immunity
 immunity
 0
-1000
-1000.0
+100
+14.0
 1
+1
+NIL
+HORIZONTAL
+
+MONITOR
+286
+457
+343
+502
+NIL
+born
+17
+1
+11
+
+SLIDER
+16
+304
+188
+337
+sick-duration
+sick-duration
+0
+100
+14.0
+1
+1
+NIL
+HORIZONTAL
+
+MONITOR
+357
+457
+414
+502
+sick%
+count turtles with [virus?] / count turtles * 100
+2
+1
+11
+
+MONITOR
+422
+457
+493
+502
+immune%
+count turtles with [immune?] / count turtles * 100
+2
+1
+11
+
+MONITOR
+379
+509
+454
+554
+time-years
+ticks / 52
+1
+1
+11
+
+MONITOR
+215
+457
+274
+502
+Infected
+Infected
+17
+1
+11
+
+SLIDER
+15
+139
+187
+172
+Starting-Population
+Starting-Population
+10
+1000
+100.0
+10
+1
+NIL
+HORIZONTAL
+
+SLIDER
+17
+390
+189
+423
+Maximum-Population
+Maximum-Population
+50
+1000
+300.0
+10
 1
 NIL
 HORIZONTAL
