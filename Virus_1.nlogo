@@ -115,8 +115,8 @@ end
 GRAPHICS-WINDOW
 236
 10
-674
-449
+673
+448
 -1
 -1
 13.030303030303031
@@ -158,9 +158,9 @@ NIL
 
 BUTTON
 16
-100
+95
 79
-133
+128
 go
 go
 T
@@ -174,10 +174,10 @@ NIL
 1
 
 PLOT
-206
-464
-461
-614
+214
+451
+469
+601
 Year Plot
 Weeks
 Population
@@ -203,7 +203,7 @@ tick-rate
 tick-rate
 10
 500
-330.0
+100.0
 10
 1
 NIL
@@ -272,7 +272,7 @@ p_inf
 p_inf
 0
 1
-0.75
+0.65
 0.01
 1
 NIL
@@ -309,10 +309,10 @@ NIL
 HORIZONTAL
 
 MONITOR
-689
-343
-784
-388
+687
+344
+782
+389
 NIL
 born
 17
@@ -357,9 +357,9 @@ count turtles with [immune?] / count turtles * 100
 11
 
 MONITOR
-690
+687
 391
-784
+781
 436
 time-years
 ticks / 52
@@ -462,7 +462,7 @@ maxit
 maxit
 -1
 100 * 52
--1.0
+0.0
 52
 1
 NIL
@@ -480,10 +480,10 @@ healthy%
 11
 
 PLOT
-470
-465
-690
-616
+471
+450
+691
+601
 Histogram
 weeks
 Population
