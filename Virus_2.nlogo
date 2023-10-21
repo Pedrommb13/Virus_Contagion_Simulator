@@ -120,7 +120,13 @@ to progress ;pessoas procedure
 end
 
 to immune-or-die ;pessoas procedure
-  ifelse random-float 100 < mortality [ set dead dead + 1 die ] [ set recovered recovered + 1 get-healthy ]
+  ifelse age < 20 * 52 * 7
+  [
+    ifelse random-float 100 * ( age / 20 * 52 * 7) < mortality  [ set dead dead + 1 die ] [ set recovered recovered + 1 get-healthy ]
+  ]
+  [
+    ifelse random-float 100 < mortality [ set dead dead + 1 die ] [ set recovered recovered + 1 get-healthy ]
+  ]
 end
 
 to get-sick ;pessoas procedure
