@@ -78,7 +78,7 @@ to reset-mask
 end
 
 to update-sickness ;pessoas procedure
-  if immune? [ update-immune ]
+  update-immune
   ifelse virus? and incubation? [ progress ]
   [
     ifelse virus?
@@ -272,7 +272,7 @@ tick-rate
 tick-rate
 10
 500
-100.0
+250.0
 10
 1
 NIL
@@ -678,10 +678,10 @@ count turtles
 11
 
 SLIDER
-16
-357
-185
-390
+199
+400
+356
+433
 Mask%
 Mask%
 0
@@ -693,10 +693,10 @@ NIL
 HORIZONTAL
 
 MONITOR
-1411
-288
-1489
-333
+1415
+335
+1493
+380
 pessoas/m^2
 count turtles / (max-pxcor * max-pycor)
 2
@@ -756,6 +756,17 @@ B
 NIL
 NIL
 1
+
+MONITOR
+1408
+287
+1514
+332
+Vaccinated_Now
+count pessoas with [vac?]
+17
+1
+11
 
 @#$#@#$#@
 ## WHAT IS IT?
