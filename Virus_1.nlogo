@@ -36,7 +36,12 @@ to go
   ask pessoas[
     move
     if immune? [ update-immune ]
-    ifelse virus? [ progress spread-sick ] [ spread-healthy ]
+    ifelse virus?
+      [
+        progress spread-sick
+      ] [
+        if not immune? [ spread-healthy ]
+      ]
     reproduce
     set age age - 1
     if age = 0 [ die ]
@@ -81,7 +86,7 @@ end
 to get-healthy ;pessoas procedure
   set virus? false
   set color blue
-  set immune-duration immunity - random 5 + random 5
+  set immune-duration immunity - random (immunity / 5) + random (immunity / 5)
 end
 
 to move ;pessoas procedure
@@ -115,8 +120,8 @@ end
 GRAPHICS-WINDOW
 236
 10
-673
-448
+674
+449
 -1
 -1
 13.030303030303031
@@ -203,7 +208,7 @@ tick-rate
 tick-rate
 10
 500
-250.0
+100.0
 10
 1
 NIL
@@ -272,7 +277,7 @@ p_inf
 p_inf
 0
 1
-0.7
+1.0
 0.01
 1
 NIL
@@ -302,7 +307,7 @@ immunity
 immunity
 0
 100
-14.0
+28.0
 1
 1
 NIL

@@ -3,10 +3,11 @@ breed [pessoas pessoa]
 pessoas-own[
   virus?
   mask?
-  vac?
   age
   immune-duration
   virus-duration
+  incubation-duration
+  vac-duration
 ]
 
 globals[
@@ -14,6 +15,7 @@ globals[
   recovered
   born
   infected
+  vaccinated
 ]
 
 to setup
@@ -21,10 +23,12 @@ to setup
   reset-ticks
   ask patches [ set pcolor white ]
   create-pessoas Starting-Population [
+    set vac-duration 90
     set virus? false
-    set age random 50 * 52
+    set mask? false
+    set age random 80 * 52 * 7
     set color green
-    set shape "person"
+    set shape "circle"
     setxy random-xcor random-ycor
   ]
   ask n-of Starting-infection pessoas [ get-sick ]
@@ -33,10 +37,12 @@ end
 to go
   reset-timer
   if ticks = maxit [stop]
+  reset-mask
+  vacination
   ask pessoas[
+    if not virus? and vac? [update-vac]
     move
-    if immune? [ update-immune ]
-    ifelse virus? [ progress spread-sick ] [ spread-healthy ]
+    update-sickness
     reproduce
     set age age - 1
     if age = 0 [ die ]
@@ -45,43 +51,92 @@ to go
   tick
 end
 
+to vacination
+  ifelse (count pessoas * (Vax/day / 100)) > count pessoas with [not (virus? and not incubation?) and not vac?]
+  [
+    ask pessoas with [not (virus? and not incubation?) and not vac?]
+    [
+      set vac-duration (- (Incubation-time - random (Incubation-time / 3) + random (Incubation-time / 3)))
+      set color violet
+      set vaccinated vaccinated + 1
+    ]
+  ]
+  [
+    ask n-of (count pessoas * (Vax/day / 100)) pessoas with [not ( virus? and not incubation?) and not vac?]
+    [
+      set vac-duration (- (Incubation-time - random (Incubation-time / 3) + random (Incubation-time / 3)))
+      set color violet
+      set vaccinated vaccinated + 1
+    ]
+  ]
+
+end
+
+to reset-mask
+  ask pessoas [set mask? false]
+  ask n-of (count pessoas * (mask% / 100)) pessoas [set mask? true]
+end
+
+to update-sickness ;pessoas procedure
+  if immune? [ update-immune ]
+  ifelse virus? and incubation? [ progress ]
+  [
+    ifelse virus?
+    [
+      progress spread-sick
+    ] [
+      if not immune? [ spread-healthy ]
+    ]
+  ]
+end
+
 to update-immune ;pessoas procedure
   set immune-duration immune-duration - 1
   if immune? = false [ set color green ]
 end
 
+to update-vac
+  set vac-duration vac-duration + 1
+  if vac-duration = 0 [get-healthy]
+end
+
 to spread-sick ;pessoas procedure
   ask other pessoas-here with [virus? = false and immune? = false] [
-    if random-float 1 < p_inf [ get-sick ]
+    ifelse mask? [if random-float 1 < p_inf * 0.25 [ get-sick ]] [if random-float 1 < p_inf [ get-sick ]]
   ]
 end
 
 to spread-healthy ;pessoas procedure
   if count other pessoas-here with [virus? = true ] > 0 [
-    if random-float 1 < p_inf [ get-sick ]
+    ifelse mask? [if random-float 1 < p_inf * 0.25 [ get-sick ]] [if random-float 1 < p_inf [ get-sick ]]
   ]
 end
 
 to progress ;pessoas procedure
-    ifelse virus-duration > 0 [ set virus-duration virus-duration - 1 ] [ immune-or-die ]
+  ifelse incubation? [ set incubation-duration incubation-duration - 1 ]
+  [
+    ifelse sick? [ set virus-duration virus-duration - 1 set color red ] [ immune-or-die ]
+  ]
 end
 
 to immune-or-die ;pessoas procedure
-  ifelse random-float 1 < mortality [ set dead dead + 1 die ] [ set recovered recovered + 1 get-healthy ]
+  ifelse random-float 100 < mortality [ set dead dead + 1 die ] [ set recovered recovered + 1 get-healthy ]
 end
 
 to get-sick ;pessoas procedure
   set virus? true
-  set color red
-  set virus-duration sick-duration - random (sick-duration / 5) + random (sick-duration / 5)
+  set color orange
+  set incubation-duration Incubation-time - random (Incubation-time / 3) + random (Incubation-time / 3)
+  set virus-duration sick-time - random (sick-time / 2) + random (sick-time / 2)
   set immune-duration 0
   set infected infected + 1
 end
 
 to get-healthy ;pessoas procedure
   set virus? false
+  set incubation-duration 0
   set color blue
-  set immune-duration immunity - random 5 + random 5
+  set immune-duration immunity - random (immunity / 3) + random (immunity / 3)
 end
 
 to move ;pessoas procedure
@@ -94,10 +149,11 @@ to reproduce ;pessoas procedure
   if random-float 1 < nat-tax and count other pessoas-here > 0 and count turtles < Maximum-Population
     [ hatch 1
       [
-        set age 50 * 52
+        set age 80 * 52 * 7 + random 10 * 52 * 7 - random 10 * 52 * 7
         lt 90 fd 1
         get-healthy
         set immune-duration 0
+        set vac-duration 90
         set color green
         set born born + 1
       ]
@@ -111,15 +167,27 @@ end
 to-report immune? ;pessoas report
   report immune-duration > 0
 end
+
+to-report sick? ;pessoas report
+  report virus-duration > 0
+end
+
+to-report incubation? ;pessoas report
+  report Incubation-duration > 0
+end
+
+to-report vac? ;pessoas report
+  report vac-duration < 90
+end
 @#$#@#$#@
 GRAPHICS-WINDOW
-236
-10
-673
-448
+360
+21
+954
+616
 -1
 -1
-13.030303030303031
+4.543
 1
 10
 1
@@ -129,10 +197,10 @@ GRAPHICS-WINDOW
 1
 1
 1
--16
-16
--16
-16
+-64
+64
+-64
+64
 0
 0
 1
@@ -174,12 +242,12 @@ NIL
 1
 
 PLOT
-214
-451
-469
-601
-Year Plot
-Weeks
+967
+59
+1222
+209
+1/2 Year Plot
+Days
 Population
 0.0
 10.0
@@ -187,12 +255,13 @@ Population
 10.0
 true
 true
-"" "set-plot-x-range (ticks - 52) ticks"
+"" "set-plot-x-range (ticks - 26 * 7) ticks\n"
 PENS
 "Sick" 1.0 0 -2674135 true "" "plot count turtles with [virus?]"
 "Immune" 1.0 0 -11033397 true "" "plot count turtles with [immune?]"
-"healthy" 1.0 0 -13840069 true "" "plot count turtles with [virus? = false and immune? = false]"
-"total" 1.0 0 -7500403 true "" "plot count turtles"
+"Incubating" 1.0 0 -955883 true "" "plot count turtles with [incubation?]"
+"Vaccinated" 1.0 0 -8630108 true "" "plot count turtles with [vac?]"
+"Masked" 1.0 0 -1184463 true "" "plot count turtles with [mask?]"
 
 SLIDER
 16
@@ -203,7 +272,7 @@ tick-rate
 tick-rate
 10
 500
-250.0
+100.0
 10
 1
 NIL
@@ -227,10 +296,10 @@ NIL
 1
 
 MONITOR
-687
-296
-783
-341
+1232
+240
+1328
+285
 Mortality_Total
 dead
 17
@@ -238,10 +307,10 @@ dead
 11
 
 MONITOR
-688
-249
-782
-294
+1233
+193
+1327
+238
 Recovered_Total
 recovered
 17
@@ -249,12 +318,42 @@ recovered
 11
 
 SLIDER
-15
-346
-187
-379
+198
+175
+355
+208
 mortality
 mortality
+0
+100
+5.0
+0.1
+1
+NIL
+HORIZONTAL
+
+SLIDER
+197
+134
+355
+167
+p_inf
+p_inf
+0
+1
+0.85
+0.01
+1
+NIL
+HORIZONTAL
+
+SLIDER
+14
+309
+186
+342
+nat-tax
+nat-tax
 0
 1
 0.02
@@ -264,55 +363,25 @@ NIL
 HORIZONTAL
 
 SLIDER
-14
-305
-186
-338
-p_inf
-p_inf
-0
-1
-0.7
-0.01
-1
-NIL
-HORIZONTAL
-
-SLIDER
-17
-471
-189
-504
-nat-tax
-nat-tax
-0
-1
-0.01
-0.01
-1
-NIL
-HORIZONTAL
-
-SLIDER
-16
-430
-188
-463
+198
+309
+354
+342
 immunity
 immunity
 0
 100
-14.0
+90.0
 1
 1
 NIL
 HORIZONTAL
 
 MONITOR
-687
-344
-782
-389
+1235
+336
+1330
+381
 NIL
 born
 17
@@ -320,36 +389,36 @@ born
 11
 
 SLIDER
-15
-387
-187
-420
-sick-duration
-sick-duration
+198
+266
+354
+299
+Sick-time
+Sick-time
 0
 100
-14.0
+10.0
 1
 1
 NIL
 HORIZONTAL
 
 MONITOR
-787
-202
-848
-247
+1332
+146
+1393
+191
 sick%
-count turtles with [virus?] / count turtles * 100
+count turtles with [virus? and not incubation?] / count turtles * 100
 2
 1
 11
 
 MONITOR
-787
-247
-848
-292
+1332
+193
+1393
+238
 immune%
 count turtles with [immune?] / count turtles * 100
 2
@@ -357,21 +426,21 @@ count turtles with [immune?] / count turtles * 100
 11
 
 MONITOR
-687
-391
-781
-436
-time-years
-ticks / 52
+1235
+383
+1329
+428
+Years_passed
+ticks / 52 / 7
 1
 1
 11
 
 MONITOR
-688
-201
-782
-246
+1233
+145
+1327
+190
 Infected_Total
 Infected
 17
@@ -387,7 +456,7 @@ Starting-Population
 Starting-Population
 10
 1000
-100.0
+1000.0
 10
 1
 NIL
@@ -401,18 +470,18 @@ SLIDER
 Maximum-Population
 Maximum-Population
 50
-1000
-250.0
+5000
+2500.0
 10
 1
 NIL
 HORIZONTAL
 
 BUTTON
-704
-28
-789
-61
+192
+94
+277
+127
 Go_n
 let x n\nloop [if x = 0 [stop] go set x x - 1]
 NIL
@@ -426,12 +495,12 @@ NIL
 1
 
 INPUTBOX
-800
-27
-850
-87
+284
+56
+334
+116
 n
-52.0
+365.0
 1
 0
 Number
@@ -469,10 +538,10 @@ NIL
 HORIZONTAL
 
 MONITOR
-787
-294
-848
-339
+1332
+240
+1393
+285
 healthy%
 (count turtles with [not virus? and not immune?] / count turtles * 100)
 2
@@ -480,12 +549,12 @@ healthy%
 11
 
 PLOT
-471
-450
-691
-601
+967
+219
+1222
+372
 Histogram
-weeks
+Days
 Population
 0.0
 10.0
@@ -497,8 +566,9 @@ false
 PENS
 "default" 1.0 0 -2674135 true "" "plot count turtles with [virus?]"
 "pen-1" 1.0 0 -11033397 true "" "plot count turtles with [immune?]"
-"pen-2" 1.0 0 -11085214 true "" "plot count turtles with [not virus? and not immune?]"
-"pen-3" 1.0 0 -16777216 true "" "plot count turtles"
+"pen-2" 1.0 0 -11085214 true "" "plot count turtles with [not virus?]"
+"pen-3" 1.0 0 -955883 true "" "plot count turtles with [incubation?]"
+"pen-4" 1.0 0 -8630108 true "" "plot count turtles with [vac?]"
 
 SLIDER
 14
@@ -509,28 +579,28 @@ Starting-infection
 Starting-infection
 0
 100
-10.0
+25.0
 1
 1
 NIL
 HORIZONTAL
 
 MONITOR
-849
-202
-929
-247
+1394
+146
+1474
+191
 Sick_Now
-count turtles with [virus?]
+count turtles with [virus? and not incubation?]
 17
 1
 11
 
 MONITOR
-849
-247
-929
-292
+1394
+191
+1474
+236
 Immune_Now
 count turtles with [Immune?]
 17
@@ -538,10 +608,10 @@ count turtles with [Immune?]
 11
 
 MONITOR
-849
-294
-929
-339
+1396
+239
+1476
+284
 Heallthy_Now
 count turtles with [not virus? and not immune?]
 17
@@ -549,15 +619,143 @@ count turtles with [not virus? and not immune?]
 11
 
 MONITOR
-849
-342
-929
-387
+1332
+335
+1412
+380
 Idade Media
-(sum [age] of turtles / count turtles) / 52
+(sum [age] of turtles / count turtles) / 52 / 7
 1
 1
 11
+
+SLIDER
+198
+220
+354
+253
+Incubation-time
+Incubation-time
+0
+100
+7.0
+1
+1
+NIL
+HORIZONTAL
+
+MONITOR
+1319
+98
+1392
+143
+incubating%
+count turtles with [incubation?] / count turtles * 100
+2
+1
+11
+
+MONITOR
+1395
+98
+1487
+143
+Incubating_Now
+count pessoas with [incubation?]
+17
+1
+11
+
+MONITOR
+1233
+98
+1316
+143
+Population
+count turtles
+0
+1
+11
+
+SLIDER
+16
+357
+185
+390
+Mask%
+Mask%
+0
+100
+0.0
+1
+1
+NIL
+HORIZONTAL
+
+MONITOR
+1411
+288
+1489
+333
+pessoas/m^2
+count turtles / (max-pxcor * max-pycor)
+2
+1
+11
+
+SLIDER
+199
+356
+355
+389
+Vax/day
+Vax/day
+0
+2.5
+0.0
+0.1
+1
+NIL
+HORIZONTAL
+
+MONITOR
+1233
+288
+1328
+333
+Vaccinated_Total
+vaccinated
+17
+1
+11
+
+MONITOR
+1332
+288
+1407
+333
+Vaccinated%
+(count turtles with [vac?] / count turtles * 100)
+2
+1
+11
+
+BUTTON
+191
+54
+274
+87
+Spread_N
+let x n\nloop [if x = 0 [stop] spread-bt set x x - 1]
+NIL
+1
+T
+OBSERVER
+NIL
+B
+NIL
+NIL
+1
 
 @#$#@#$#@
 ## WHAT IS IT?
